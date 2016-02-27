@@ -11,6 +11,9 @@ public class NewsModel implements Serializable{
         this.description = description;
     }
 
+    public NewsModel() {
+    }
+
     public String getTitle(){
         return title;
     }

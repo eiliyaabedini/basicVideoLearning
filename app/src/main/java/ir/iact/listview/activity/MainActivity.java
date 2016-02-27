@@ -1,5 +1,6 @@
 package ir.iact.listview.activity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,10 +13,18 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 
 import ir.iact.listview.R;
 import ir.iact.listview.model.NewsModel;
+import ir.iact.listview.service.APIService;
+import ir.iact.listview.service.NewsModelResponse;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.GsonConverterFactory;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         // Define ListView
         final ListView listView = (ListView) findViewById(R.id.mainActivity_listView);
 
-        // Create Models
+      /*  // Create Models
         NewsModel newsModel1 = new NewsModel("salam","In Tozihate Salam hast");
         NewsModel newsModel2 = new NewsModel("Haleton Chetore","In Tozihate Haleton Chetore");
         NewsModel newsModel3 = new NewsModel("In Avalin Liste mane","In Tozihate In Avalin Liste mane");
@@ -38,11 +47,44 @@ public class MainActivity extends AppCompatActivity {
         newsModels.add(newsModel2);
         newsModels.add(newsModel3);
 
-        newsModels.add(new NewsModel("ABCD", "EFG"));
+        newsModels.add(new NewsModel("ABCD", "EFG"));*/
 
-        // Set Adapter to ListView
-        final MyListAdapter myListAdapter = new MyListAdapter(newsModels);
-        listView.setAdapter(myListAdapter);
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://www.mocky.io/v2/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        APIService service = retrofit.create(APIService.class);
+
+        Call<NewsModelResponse> serviceNewsModels = service.getNewsModels();
+
+
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.show();
+
+        serviceNewsModels.enqueue(new Callback<NewsModelResponse>() {
+            @Override
+            public void onResponse(Call<NewsModelResponse> call, Response<NewsModelResponse> response) {
+                progressDialog.dismiss();
+                // Set Adapter to ListView
+                NewsModelResponse newsModelResponse = response.body();
+
+                ArrayList<NewsModel> newsModelArrayList = newsModelResponse.getNewsModels();
+
+                final MyListAdapter myListAdapter = new MyListAdapter(newsModelArrayList);
+                listView.setAdapter(myListAdapter);
+
+            }
+
+            @Override
+            public void onFailure(Call<NewsModelResponse> call, Throwable t) {
+                progressDialog.dismiss();
+
+            }
+        });
+
+
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -88,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.list_item, null);
+            View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.list_item, parent,false);
             TextView textView = (TextView) view.findViewById(R.id.listItem_titleTextView);
             TextView description = (TextView) view.findViewById(R.id.listItem_descriptionTextView);
 
